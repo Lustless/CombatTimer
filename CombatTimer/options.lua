@@ -3,10 +3,12 @@ function CombatTimer:GetDefaultConfig()
 		profile = {
 			scale = 1.00,
 			width = 60,
+			height = 10,
 			texture = "Glaze",
 			fadeInStart = 7,
 			fadeInEnd = 0,
 			hide = true,
+			hideCountdown = true,
 			inside = {["arena"] = true, ["none"] = true},
 			visual = {
 				r = 0.15,
@@ -90,48 +92,55 @@ function CombatTimer:SetupOptions()
 				min = 20, max = 600, step = 1,
 				arg = "width",
 			},
-			scale = {
+			height = {
 				order = 2,
+				name = "Height",
+				type = "range", isPercent = false,
+				min = 20, max = 600, step = 1,
+				arg = "height",
+			},
+			scale = {
+				order = 3
 				name = "Scale",
 				type = "range", isPercent = false,
 				min = 0.5, max = 2, step = 0.05,
 				arg = "scale",
 			},
 			fadeInStart = {
-				order = 3,
+				order = 4,
 				name = "Fade in start",
 				type = "range", isPercent = false,
 				min = 1, max = 7, step = 0.1,
 				arg = "fadeInStart",
 			},
 			fadeInEnd = {
-				order = 4,
+				order = 5,
 				name = "Fade in end",
 				type = "range", isPercent = false,
 				min = 0, max = 7, step = 0.1,
 				arg = "fadeInEnd",
 			},
 			hide = {
-				order = 5,
+				order = 6,
 				name = "Hide out of combat",
 				type = "toggle",
 				arg = "hideTimer",
 			},
 			lock = {
-				order = 6,
+				order = 7,
 				name = "Lock",
 				type = "toggle",
 				arg = "lock",
 			},
 			color = {
-				order = 7,
+				order = 8,
 				name = "Color",
 				type = "color",
 				set = function(info, r, g, b, a) self:OnColorSet(r, g, b, a) end,
 				get = function(info) return self.db.profile.visual.r, self.db.profile.visual.g, self.db.profile.visual.b, self.db.profile.visual.a; end,
 			},
 			texture = {
-				order = 8,
+				order = 9,
 				type = "select",
 				name = "Texture",
 				values = self.media:List('statusbar'),
@@ -150,7 +159,7 @@ function CombatTimer:SetupOptions()
 				end,
 			},
 			inside = {
-				order = 9,
+				order = 10,
 				name = "Only enable inside",
 				values = enabledIn,
 				type = "multiselect",
@@ -158,25 +167,31 @@ function CombatTimer:SetupOptions()
 				set = toggleTableEntry,
 			},
 			resetPos = {
-				order = 10,
+				order = 11,
 				name = "Reset position",
 				type = "execute",
 				func = function() self.db.profile.position = nil; self:SetPosition(); end,
 			},
 			test = {
-				order = 11,
-				name = "Test",
+				order = 12,
+				name = "",
 				desc = "Enable test mode. Re-enable Lock when done",
 				type = "execute",
 				func = function() self.db.profile.lock = nil self:TestMode() end,
+				
+			hideCountdown = {
+				order = 13,
+				name = "Hide countdown number",
+				type = "toggle",
+				arg = "hideCountdown",
 			},
 		}
 	}
 	
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Combat Timer", self.options)
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Combat Timer", "Combat Timer")
-	self:RegisterChatCommand("ctimer", slashHandler)
-	self:RegisterChatCommand("combattimer", slashHandler)
+	-- self:RegisterChatCommand("ctimer", slashHandler) --
+	-- self:RegisterChatCommand("combattimer", slashHandler) --
 end
 
 function CombatTimer:OnColorSet(r, g, b, a)
