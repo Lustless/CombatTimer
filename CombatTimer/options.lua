@@ -22,6 +22,9 @@ function CombatTimer:GetDefaultConfig()
 	return defaults
 end
 
+
+
+
 --common functions for options callbacks
 local function toggleTableEntry(k, v)
 	CombatTimer.db.profile[k.arg][v] = not CombatTimer.db.profile[k.arg][v]
@@ -184,14 +187,15 @@ function CombatTimer:SetupOptions()
 				name = "Hide countdown number",
 				type = "toggle",
 				arg = "hideCountdown",
+
 			},
 		}
 	}
 	
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Combat Timer", self.options)
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Combat Timer", "Combat Timer")
-	-- self:RegisterChatCommand("ctimer", slashHandler) --
-	-- self:RegisterChatCommand("combattimer", slashHandler) --
+	self:RegisterChatCommand("ctimer", slashHandler) --
+	self:RegisterChatCommand("combattimer", slashHandler) --
 end
 
 function CombatTimer:OnColorSet(r, g, b, a)
