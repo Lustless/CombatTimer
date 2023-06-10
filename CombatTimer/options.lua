@@ -94,55 +94,48 @@ function CombatTimer:SetupOptions()
 				min = 20, max = 600, step = 1,
 				arg = "width",
 			},
-			height = {
-				order = 2,
-				name = "Height",
-				type = "range", isPercent = false,
-				min = 20, max = 600, step = 1,
-				arg = "height",
-			},
 			scale = {
-				order = 3
+				order = 2
 				name = "Scale",
 				type = "range", isPercent = false,
 				min = 0.5, max = 2, step = 0.05,
 				arg = "scale",
 			},
 			fadeInStart = {
-				order = 4,
+				order = 3,
 				name = "Fade in start",
 				type = "range", isPercent = false,
 				min = 1, max = 7, step = 0.1,
 				arg = "fadeInStart",
 			},
 			fadeInEnd = {
-				order = 5,
+				order = 4,
 				name = "Fade in end",
 				type = "range", isPercent = false,
 				min = 0, max = 7, step = 0.1,
 				arg = "fadeInEnd",
 			},
 			hide = {
-				order = 6,
+				order = 5,
 				name = "Hide out of combat",
 				type = "toggle",
 				arg = "hideTimer",
 			},
 			lock = {
-				order = 7,
+				order = 6,
 				name = "Lock",
 				type = "toggle",
 				arg = "lock",
 			},
 			color = {
-				order = 8,
+				order = 7,
 				name = "Color",
 				type = "color",
 				set = function(info, r, g, b, a) self:OnColorSet(r, g, b, a) end,
 				get = function(info) return self.db.profile.visual.r, self.db.profile.visual.g, self.db.profile.visual.b, self.db.profile.visual.a; end,
 			},
 			texture = {
-				order = 9,
+				order = 8,
 				type = "select",
 				name = "Texture",
 				values = self.media:List('statusbar'),
@@ -161,7 +154,7 @@ function CombatTimer:SetupOptions()
 				end,
 			},
 			inside = {
-				order = 10,
+				order = 9,
 				name = "Only enable inside",
 				values = enabledIn,
 				type = "multiselect",
@@ -169,13 +162,13 @@ function CombatTimer:SetupOptions()
 				set = toggleTableEntry,
 			},
 			resetPos = {
-				order = 11,
+				order = 10,
 				name = "Reset position",
 				type = "execute",
 				func = function() self.db.profile.position = nil; self:SetPosition(); end,
 			},
 			test = {
-				order = 12,
+				order = 11,
 				name = "",
 				desc = "Enable test mode. Re-enable Lock when done",
 				type = "execute",
@@ -187,8 +180,8 @@ function CombatTimer:SetupOptions()
 	
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Combat Timer", self.options)
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Combat Timer", "Combat Timer")
-	self:RegisterChatCommand("ctimer", slashHandler) --
-	self:RegisterChatCommand("combattimer", slashHandler) --
+	self:RegisterChatCommand("ctimer", slashHandler) 
+	self:RegisterChatCommand("combattimer", slashHandler) 
 end
 
 function CombatTimer:OnColorSet(r, g, b, a)
