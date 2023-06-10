@@ -423,31 +423,31 @@ function CombatTimer:SetPosition()
     end
 end
 
-function CombatTimer:CreateDisplay()
-    local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-                       edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeSize = 1,
-                       insets = { left = 1, right = 1, top = 1, bottom = 1 } }
+<-- function CombatTimer:CreateDisplay()
+   -- local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+   --                    edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeSize = 1,
+          --             insets = { left = 1, right = 1, top = 1, bottom = 1 } }
 
-    self.frame = CreateFrame("StatusBar", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
-    self.frame:SetHeight(16)
-    self.frame:SetMovable(true)
-    self.frame:EnableMouse(true)
-    self.frame:RegisterForDrag("LeftButton")
-    self.frame:SetBackdrop(backdrop)
-    self.frame:SetBackdropColor(0, 0, 0, 1.0)
-    self.frame:SetBackdropBorderColor(0, 0, 0, 1.0)
-    self.frame:SetScript("OnDragStart", OnDragStart)
-    self.frame:SetScript("OnDragStop", OnDragStop)
-    self.frame:SetMinMaxValues(0, 6)
-    self.frame:SetValue(0)
+ -- self.frame = CreateFrame("StatusBar", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+ -- self.frame:SetHeight(16)
+ -- self.frame:SetMovable(true)
+   --elf.frame:EnableMouse(true)
+  --self.frame:RegisterForDrag("LeftButton")
+    --self.frame:SetBackdrop(backdrop)
+   -- self.frame:SetBackdropColor(0, 0, 0, 1.0)
+   -- self.frame:SetBackdropBorderColor(0, 0, 0, 1.0)
+ -- self.frame:SetScript("OnDragStart", OnDragStart)
+ -- self.frame:SetScript("OnDragStop", OnDragStop)
+ -- self.frame:SetMinMaxValues(0, 6)
+--  self.frame:SetValue(0)
 
-    self.frame.text = self.frame:CreateFontString(nil)
-    self.frame.text:SetFontObject(GameFontHighlight)
-    self.frame.text:SetPoint("CENTER", self.frame)
-    self.frame.text:SetShadowOffset(1, -1)
-    self.frame.text:SetShadowColor(0, 0, 0, 1)
-    self.frame.text:SetText("ooc")
-end
+--  self.frame.text = self.frame:CreateFontString(nil)
+--  self.frame.text:SetFontObject(GameFontHighlight)
+--  self.frame.text:SetPoint("CENTER", self.frame)
+ -- self.frame.text:SetShadowOffset(1, -1)
+--  self.frame.text:SetShadowColor(0, 0, 0, 1)
+--  self.frame.text:SetText("ooc") 
+--end
 
 function CombatTimer:UpdateSettings()
     self.frame:SetStatusBarTexture(self.media:Fetch(self.media.MediaType.STATUSBAR, self.db.profile.texture))
