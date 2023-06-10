@@ -3,7 +3,7 @@ function CombatTimer:GetDefaultConfig()
 		profile = {
 			scale = 1.00,
 			width = 60,
-			height = 10,
+			height = 3,
 			texture = "Glaze",
 			fadeInStart = 7,
 			fadeInEnd = 0,
