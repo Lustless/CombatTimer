@@ -253,17 +253,29 @@ function CombatTimer:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function CombatTimer:StartTimer()
-    self:ResetTimer()
-    self.frame:SetScript("OnUpdate", CombatTimer.onUpdate)
-    self.frame:Show()
+    self.frame:SetScript("OnUpdate", function(frame, elapsed)
+        self.timer = self.timer + elapsed
+
+        if (self.timer >= self.interval) then
+            self.timer = 0
+            self.secondsLeft = self.secondsLeft - 1
+
+            -- Hide the countdown timer text
+            self.frame.text:SetText("")
+
+            if (self.secondsLeft <= 0) then
+                self:StopTimer()
+            end
+        end
+    end)
 end
 
 function CombatTimer:StopTimer()
     self.frame:SetScript("OnUpdate", nil)
     self.frame:SetValue(0)
     self.frame:SetAlpha(1.0)
-
-    self.frame.text:SetText("ooc")
+--hide the timer text
+    self.frame.text:SetText("")
 
     if (self.db.profile.hideTimer and self.db.profile.lock) then
         self.frame:Hide()
@@ -452,6 +464,7 @@ end
 function CombatTimer:UpdateSettings()
     self.frame:SetStatusBarTexture(self.media:Fetch(self.media.MediaType.STATUSBAR, self.db.profile.texture))
     self.frame:SetWidth(self.db.profile.width)
+    self.frame:SetHeight(self.db.profile.height)
     self.frame:SetScale(self.db.profile.scale)
     self.frame:SetMovable(not self.db.profile.lock)
     self.frame:EnableMouse(not self.db.profile.lock)
