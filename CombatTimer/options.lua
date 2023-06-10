@@ -8,7 +8,6 @@ function CombatTimer:GetDefaultConfig()
 			fadeInStart = 7,
 			fadeInEnd = 0,
 			hide = true,
-			hideCountdown = true,
 			inside = {["arena"] = true, ["none"] = true},
 			visual = {
 				r = 0.15,
@@ -181,12 +180,6 @@ function CombatTimer:SetupOptions()
 				desc = "Enable test mode. Re-enable Lock when done",
 				type = "execute",
 				func = function() self.db.profile.lock = nil self:TestMode() end,
-				
-			hideCountdown = {
-				order = 13,
-				name = "Hide countdown number",
-				type = "toggle",
-				arg = "hideCountdown",
 
 			},
 		}
