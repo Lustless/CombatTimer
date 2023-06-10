@@ -45,9 +45,12 @@ do
 			frame.check = check
 			local bar = frame:CreateTexture("ARTWORK")
 				bar:SetHeight(16)
-				bar:SetPoint("LEFT",check,"RIGHT",1,0)
+				bar:SetPoint("LEFT",frame,"RIGHT",1,0)
 				bar:SetPoint("RIGHT",frame,"RIGHT",-1,0)
-			frame.bar = bar
+				bar:SetGradientAlpha("HORIZONTAL", 1, 1, 1, 0.8, 1, 1, 1, 1, 1, 1, 1, 0.8)
+				frame.bar = bar
+			
+			
 			local text = frame:CreateFontString(nil,"OVERLAY","GameFontWhite")
 
 				local font, size = text:GetFont()
