@@ -12,7 +12,9 @@ local oocTime
 local UnitAffectingCombat = UnitAffectingCombat
 local UnitGUID = UnitGUID
 local m_abs = math.abs
-local fakeTick = false
+local fakeTick
+local TimeSinceLastUpdate = 0
+local ONUPDATE_INTERVAL = 0.05
 local last_value = 999999
 
 function CombatTimer:OnInitialize()
@@ -106,9 +108,6 @@ local eventRegistered = {
     ["SPELL_PERIODIC_ENERGIZE"] = true,
     ["SPELL_ENERGIZE"] = true,
     ["SPELL_AURA_REMOVED"] = true,
-    ["SPELL_DISPEL"] = true,
-    ["SPELL_DISPEL_FAILED"] = true,
-    ["DAMAGE_SPLIT"] = true,
 }
 
 local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo;
@@ -144,8 +143,10 @@ function CombatTimer:COMBAT_LOG_EVENT_UNFILTERED()
     local isSourceEnemy = CombatLog_Object_IsA(sourceFlags, COMBATLOG_FILTER_HOSTILE_PLAYERS)
     local isUnknown = CombatLog_Object_IsA(destFlags, COMBATLOG_FILTER_UNKNOWN_UNITS)
 
-    if (eventType == "SPELL_DISPEL_FAILED" or eventType == "SPELL_DISPEL") and not ((isSourcePlayer and isDestEnemy) or (isSourceEnemy and isDestPlayer)) then
-        return
+    -- Mass dispel returns an empty string as destGUID. This is a bad fix, because it will reset timer even when mass dispel does not keep you in combat. Although, when you drop combat the timer stops anyway.
+    if (spellID == 32375 and (isSourcePlayer or isSourceEnemy)) then
+        self:ResetTimer()
+        DEFAULT_CHAT_FRAME:AddMessage("\124cff009cff[CombatTimer]\124r Mass dispel detected: timer might be inaccurate now.")
     end
 
     -- return if event dest or source is not player.
@@ -239,10 +240,6 @@ function CombatTimer:COMBAT_LOG_EVENT_UNFILTERED()
         return
     end
 
-    if eventType == "DAMAGE_SPLIT" and not isDestPlayer then
-        return
-    end
-
     --return if the event is listed in our quirk table
     if ((spellID ~= nil) and (self.Quirks[spellID])) then
         return ;
@@ -253,28 +250,16 @@ function CombatTimer:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function CombatTimer:StartTimer()
-    self.frame:SetScript("OnUpdate", function(frame, elapsed)
-        self.timer = self.timer + elapsed
-
-        if (self.timer >= self.interval) then
-            self.timer = 0
-            self.secondsLeft = self.secondsLeft - 1
-
-            -- Hide the countdown timer text
-            self.frame.text:SetText("")
-
-            if (self.secondsLeft <= 0) then
-                self:StopTimer()
-            end
-        end
-    end)
+    self:ResetTimer()
+    self.frame:SetScript("OnUpdate", CombatTimer.onUpdate)
+    self.frame:Show()
 end
 
 function CombatTimer:StopTimer()
     self.frame:SetScript("OnUpdate", nil)
     self.frame:SetValue(0)
     self.frame:SetAlpha(1.0)
---hide the timer text
+
     self.frame.text:SetText("")
 
     if (self.db.profile.hideTimer and self.db.profile.lock) then
@@ -287,43 +272,48 @@ function CombatTimer:ResetTimer()
     self.frame:SetStatusBarColor(CombatTimer.db.profile.visual.r, CombatTimer.db.profile.visual.g, CombatTimer.db.profile.visual.b, CombatTimer.db.profile.visual.a)
 end
 
-function CombatTimer.onUpdate(self)
+function CombatTimer.onUpdate(self, elapsed)
     local now = GetTime()
+    TimeSinceLastUpdate = TimeSinceLastUpdate + elapsed
 
-    if endTime and (endTime <= now) then
-        outOfCombatTime = endTime + 5
-        oocTime = outOfCombatTime - now
-        for _, v in ipairs(expirationTime) do
-            if v >= outOfCombatTime and m_abs(outOfCombatTime - v) <= dur then
-                outOfCombatTime = v
-                oocTime = v - now
-                break
+    if TimeSinceLastUpdate >= ONUPDATE_INTERVAL then
+        TimeSinceLastUpdate = 0
+        if endTime and (endTime <= now) then
+            outOfCombatTime = endTime + 5
+            oocTime = outOfCombatTime - now
+            for _, v in ipairs(expirationTime) do
+                if v >= outOfCombatTime and m_abs(outOfCombatTime - v) <= dur then
+                    outOfCombatTime = v
+                    oocTime = v - now
+                    break
+                end
             end
         end
-    end
 
-    local passed = oocTime
+        local passed = oocTime
 
-    CombatTimer.frame:SetValue(passed)
-    CombatTimer.frame:SetStatusBarColor(CombatTimer.db.profile.visual.r, CombatTimer.db.profile.visual.g, CombatTimer.db.profile.visual.b, CombatTimer.db.profile.visual.a)
+        CombatTimer.frame:SetValue(passed)
 
-    if CombatTimer.db.profile.fadeInStart ~= CombatTimer.db.profile.fadeInEnd then
-        local alpha
-        if (oocTime > CombatTimer.db.profile.fadeInStart) then
-            alpha = 0
-        elseif (oocTime < CombatTimer.db.profile.fadeInEnd) then
-            alpha = 1
-        else
-            alpha = 1 / (CombatTimer.db.profile.fadeInStart - CombatTimer.db.profile.fadeInEnd) * (CombatTimer.db.profile.fadeInStart - oocTime)
+        CombatTimer.frame:SetStatusBarColor(CombatTimer.db.profile.visual.r, CombatTimer.db.profile.visual.g, CombatTimer.db.profile.visual.b, CombatTimer.db.profile.visual.a)
+
+        if CombatTimer.db.profile.fadeInStart ~= CombatTimer.db.profile.fadeInEnd then
+            local alpha
+            if (oocTime > CombatTimer.db.profile.fadeInStart) then
+                alpha = 0
+            elseif (oocTime < CombatTimer.db.profile.fadeInEnd) then
+                alpha = 1
+            else
+                alpha = 1 / (CombatTimer.db.profile.fadeInStart - CombatTimer.db.profile.fadeInEnd) * (CombatTimer.db.profile.fadeInStart - oocTime)
+            end
+
+            CombatTimer.frame:SetAlpha(alpha)
         end
 
-        CombatTimer.frame:SetAlpha(alpha)
-    end
+        CombatTimer.frame.text:SetText(string.format("%.1f", oocTime >= 0 and oocTime or 0))
 
-    CombatTimer.frame.text:SetText(string.format("%.1f", oocTime >= 0 and oocTime or 0))
-
-    if FTE == true then
-        CombatTimer:ResetTimer()
+        if FTE == true then
+            CombatTimer:ResetTimer()
+        end
     end
 end
 
@@ -352,7 +342,7 @@ function CombatTimer:UNIT_AURA()
     end
 end
 
-local failSpellIDs = { [5171] = true, [6774] = true, [48674] = true, [48673] = true, [26679] = true }
+local failSpellIDs = {[5171] = true, [6774] = true, [48674] = true, [48673] = true, [26679] = true}
 function CombatTimer:UNIT_SPELLCAST_FAILED(event, unit, _, spellID)
     if unit ~= "player" then
         return
@@ -383,11 +373,6 @@ function CombatTimer:UNIT_POWER_UPDATE(event, unitTarget, powerType)
     local maxEnergy = UnitPowerMax("player")
     local now = GetTime()
     local energyInc = currentEnergy - last_value
-
-    if ((now - externalManaGainTimestamp) <= 0.02) then
-        externalManaGainTimestamp = 0
-        return
-    end
 
     --print("now:", now, "lastValue:", last_value, " - current:", currentEnergy, " - energyInc:", energyInc)
     last_value = currentEnergy
@@ -436,34 +421,30 @@ function CombatTimer:SetPosition()
 end
 
 function CombatTimer:CreateDisplay()
-   local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-                      edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeSize = 1,
-                    insets = { left = 1, right = 1, top = 1, bottom = 1 } }
+    local backdrop = { bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+                       edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeSize = 1,
+                       insets = { left = 1, right = 1, top = 1, bottom = 1 } }
 
-self.frame = CreateFrame("StatusBar", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
-  self.frame:SetHeight(16)
-  self.frame:SetMovable(true)
-   self.frame:EnableMouse(true)
-  self.frame:RegisterForDrag("LeftButton")
-    self.frame:SetBackdrop(backdrop)
-    self.frame:SetBackdropColor(0, 0, 0, 1.0)
-    self.frame:SetBackdropBorderColor(0, 0, 0, 1.0)
- self.frame:SetScript("OnDragStart", OnDragStart)
-  self.frame:SetScript("OnDragStop", OnDragStop)
-  self.frame:SetMinMaxValues(0, 6)
-  self.frame:SetValue(0)
-
-  self.frame.text = self.frame:CreateFontString(nil)
-  self.frame.text:SetFontObject(GameFontHighlight)
-  self.frame.text:SetPoint("CENTER", self.frame)
-  self.frame.text:SetShadowOffset(1, -1)
-  self.frame.text:SetShadowColor(0, 0, 0, 1)
-  self.frame.text:SetText("ooc") 
+    self.frame = CreateFrame("StatusBar", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+    self.frame:SetHeight(20)
+    self.frame:SetMovable(true)
+    self.frame:EnableMouse(true)
+    self.frame:RegisterForDrag("LeftButton")
+    self.frame:SetScript("OnDragStart", OnDragStart)
+    self.frame:SetScript("OnDragStop", OnDragStop)
+    self.frame:SetMinMaxValues(0, 6)
+    self.frame:SetValue(0)
+    self.frame.text = self.frame:CreateFontString(nil)
+    self.frame.text:SetFontObject(GameFontHighlight)
+    self.frame.text:SetPoint("CENTER", self.frame)
+    self.frame.text:SetText("")
+    self.frame.text:SetAlpha(0)
 end
 
 function CombatTimer:UpdateSettings()
     self.frame:SetStatusBarTexture(self.media:Fetch(self.media.MediaType.STATUSBAR, self.db.profile.texture))
     self.frame:SetWidth(self.db.profile.width)
+    self.frame:SetHeight(self.db.profile.height)
     self.frame:SetScale(self.db.profile.scale)
     self.frame:SetMovable(not self.db.profile.lock)
     self.frame:EnableMouse(not self.db.profile.lock)
